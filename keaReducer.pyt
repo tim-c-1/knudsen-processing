@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import arcpy
+import pandas as pd
+from osgeo import osr
 
 
 class Toolbox:
@@ -11,13 +13,13 @@ class Toolbox:
         self.alias = "toolbox"
 
         # List of tool classes associated with this toolbox
-        self.tools = [keaReformat]
+        self.tools = [keaCheckRows, keaReformat]
 
 
 class keaReformat:
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "keaReformat"
+        self.label = "01 keaReformat"
         self.description = "Reformats knudsen ascii files to prep for editing. Adds a column with new coordinates (defulats to NAD83 UTM Zone 18N)"
 
     def getParameterInfo(self):
@@ -87,8 +89,7 @@ class keaReformat:
 
     def execute(self, parameters, messages):
         """The source code of the tool."""
-        import pandas as pd
-        from osgeo import osr
+        
 
         input_file = parameters[0].valueAsText
         output_file = parameters[1].valueAsText
@@ -162,6 +163,75 @@ class keaReformat:
         df[["Header", "Time Fix ID", "Date mm/dd/yyy", "Time hhmmss.sss", "200kHz Depth", "200kHz Valid", "28khz Depth", "28kHz Valid", "Speed of Sound", "Lattitude NAD83", "Longitude NAD83", "GPS Latency","X_UTM", "Y_UTM"]].to_csv(output_file, index=False)
 
         print(f"Output saved to {output_file}")
+        return
+
+    def postExecute(self, parameters):
+        """This method takes place after outputs are processed and
+        added to the display."""
+        return
+    
+class keaCheckRows:
+    def __init__(self):
+        self.label = "02 keaCheckRows"
+        self.description = "checks rows for out of range HF and duplicate positions- adds columns for true/false"
+
+    def getParameterInfo(self):
+
+        param0= arcpy.Parameter(
+            displayName="reduced kea file",
+            name="input_file",
+            datatype="DEFile",
+            parameterType="Required",
+            direction="Input"
+        )
+
+        param1 = arcpy.Parameter(
+            displayName="output formatted file",
+            name="output_file",
+            datatype="string",
+            parameterType="Required",
+            direction="Input"
+        )
+
+        params =[param0, param1]
+        return params
+    
+    def isLicensed(self):
+        """Set whether the tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        in_file = parameters[0].value
+        out_file = parameters[1]
+
+        in_file_path = parameters[0].valueAsText
+
+        if in_file:
+            out_file.value = in_file_path[:-11] + "_columncheck.csv"
+
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter. This method is called after internal validation."""
+        return
+    
+    def execute(self, parameters, messages):
+        """source code of tool"""
+        reduced_kea_file = parameters[0].valueAsText
+        file_out = parameters[1].valueAsText
+
+        df = pd.read_csv(reduced_kea_file)
+
+        df["Out Of Range HF"] = (abs(df["200kHz Depth"] - df["200kHz Depth"].shift()) > 0.3) & (abs(df["200kHz Depth"] - df["200kHz Depth"].shift(-1)) > 0.3)
+
+        df["duplicate UTM"] = (df.duplicated(subset=["X_UTM"]) & df.duplicated(subset=["Y_UTM"]))
+
+        df.to_csv(file_out, index=False)
+        
         return
 
     def postExecute(self, parameters):
