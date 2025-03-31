@@ -210,7 +210,7 @@ class keaCheckRows:
         in_file_path = parameters[0].valueAsText
 
         if in_file:
-            out_file.value = in_file_path[:-11] + "_columncheck.csv"
+            out_file.value = in_file_path[:-11] + "columncheck.csv"
 
         return
 
