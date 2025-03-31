@@ -1,7 +1,7 @@
 import pandas as pd
-import glob
-import os
 from pathlib import Path
+
+# merges kea files in bulk
 
 path = r'F:\Test\TestProject\KnudsenProcessing\RawKEA'
 files = Path(path).glob('*.kea')
