@@ -3,7 +3,8 @@ from pathlib import Path
 
 # merges edited excel files in bulk
 
-path = r'M:\MGS\Coastal\BaltimoreCityReservoirs2020\Loch_Raven\03_13_25'
+path = input("enter file path: ")
+outFileName = input("enter output file name: ")
 files = Path(path).glob('*HFedit.xlsx')
 
 dfs = list()
@@ -14,4 +15,4 @@ for f in files:
     dfs.append(xyz)
 
 df = pd.concat(dfs, ignore_index=True)
-df.to_csv(path + r'\\' + 'LR_031325_xyz.csv', index=False)
+df.to_csv(path + r'\\' + outFileName + '.csv', index=False)

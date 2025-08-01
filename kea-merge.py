@@ -3,7 +3,7 @@ from pathlib import Path
 
 # merges kea files in bulk
 
-path = r'F:\Test\TestProject\KnudsenProcessing\RawKEA'
+path = input("enter filepath: ")
 files = Path(path).glob('*.kea')
 
 dfs = list()
